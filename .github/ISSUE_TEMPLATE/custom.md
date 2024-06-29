@@ -12,7 +12,7 @@ assignees: ""
 
 ## 작업 상세 내용
 
--[]shushushushu
+-[]shushushushusafjsdjlajvsljsl
 
 ## 참고 등등
 
