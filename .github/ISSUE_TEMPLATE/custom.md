@@ -25,3 +25,4 @@ assignees: ""
 ## 연습입니다 ":"
 
 준기 코드에요
+shu practice shu shu
