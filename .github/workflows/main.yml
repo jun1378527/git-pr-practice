@@ -1,0 +1,16 @@
+name: Close Issues on Develop Merge
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  close-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close linked issues
+        run: |
+          git log -1 --pretty=%B | grep -oE '#[0-9]+' | while read issue; do
+            gh issue close "$issue"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
