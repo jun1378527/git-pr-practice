@@ -14,11 +14,24 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Debug - Print PR Body
+        run: |
+          echo "Pull Request Body:"
+          cat $GITHUB_EVENT_PATH | jq -r '.pull_request.body'
+
       - name: Close linked issues
         run: |
-          issue_numbers=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH" | grep -oE '#[0-9]+' | sed 's/#//')
+          issue_numbers=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH" | grep -ioE '#[0-9]+' | sed 's/#//')
           for issue in $issue_numbers; do
-            gh issue close "$issue"
+            echo "Closing issue $issue"
+            gh issue close "$issue" --repo $GITHUB_REPOSITORY
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
