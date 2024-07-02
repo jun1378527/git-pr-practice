@@ -1,4 +1,5 @@
-name: Close Issues on Develop Merge
+name: Close associated issue
+
 on:
   pull_request:
     branches:
@@ -7,31 +8,16 @@ on:
       - closed
 
 jobs:
-  close-issues:
-    if: github.event.pull_request.merged == true
+  close-issue:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-
-      - name: Install GitHub CLI
+      - name: Close associated issue
         run: |
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
-          sudo apt-add-repository https://cli.github.com/packages
-          sudo apt update
-          sudo apt install gh -y
-
-      - name: Debug - Print PR Body
-        run: |
-          echo "Pull Request Body:"
-          cat $GITHUB_EVENT_PATH | jq -r '.pull_request.body'
-
-      - name: Close linked issues
-        run: |
-          issue_numbers=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH" | grep -ioE '#[0-9]+' | sed 's/#//')
-          for issue in $issue_numbers; do
-            echo "Closing issue $issue"
-            gh issue close "$issue" --repo $GITHUB_REPOSITORY
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PR_URL="https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"
+          PR_BODY=$(curl -s -H "Authorization: token ${{ secrets.ACTION_TOKEN }}" $PR_URL | jq -r '.body')
+          ISSUE_NUMBER=$(echo $PR_BODY | grep -oE "close #[0-9]+" | tr -d 'close #')
+          if [[ ! -z "$ISSUE_NUMBER" ]]; then
+            curl -s -H "Authorization: token ${{ secrets.ACTION_TOKEN }}" -X PATCH "https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER" -d '{"state": "closed"}'
+          fi
+        shell: bash
