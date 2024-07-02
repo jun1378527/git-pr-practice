@@ -1,15 +1,23 @@
 name: Close Issues on Develop Merge
 on:
-  push:
+  pull_request:
     branches:
       - develop
+    types:
+      - closed
+
 jobs:
   close-issues:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
       - name: Close linked issues
         run: |
-          git log -1 --pretty=%B | grep -oE '#[0-9]+' | while read issue; do
+          issue_numbers=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH" | grep -oE '#[0-9]+' | sed 's/#//')
+          for issue in $issue_numbers; do
             gh issue close "$issue"
           done
         env:
